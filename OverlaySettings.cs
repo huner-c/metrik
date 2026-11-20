@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace Metrik;
@@ -53,29 +54,30 @@ internal sealed record OverlaySettings
     public string Format(FrameReading? frame, GpuReading gpu, string process, bool preview, string? knownRuntime = null)
     {
         var fields = new List<string>(10);
-        if (VisibleMetrics.HasFlag(Metric.Fps)) fields.Add(frame is { } fps ? $"FPS {fps.Fps:0}" : "FPS —");
-        if (VisibleMetrics.HasFlag(Metric.FrameTime)) fields.Add(frame is { } timing ? $"{timing.FrameMilliseconds:0.0} ms" : "— ms");
-        if (frame is { IsLastSample: true } && fields.Count > 0) fields[^1] += " (son)";
+        if (VisibleMetrics.HasFlag(Metric.Fps)) fields.Add($"FPS {Number(frame?.Fps, "0")}");
+        if (VisibleMetrics.HasFlag(Metric.FrameTime)) fields.Add($"{Number(frame?.FrameMilliseconds, "0.0")} ms");
+        if (frame is { IsLastSample: true } && fields.Count > 0) fields[^1] += " (last)";
         if (VisibleMetrics.HasFlag(Metric.Load)) fields.Add($"GPU {Value(gpu.Load, "%")}");
-        if (VisibleMetrics.HasFlag(Metric.Temperature)) fields.Add($"Sıcaklık {Value(gpu.Temperature, " °C")}");
+        if (VisibleMetrics.HasFlag(Metric.Temperature)) fields.Add($"Temp {Value(gpu.Temperature, " °C")}");
         if (VisibleMetrics.HasFlag(Metric.Hotspot)) fields.Add($"Hotspot {Value(gpu.Hotspot, " °C")}");
-        if (VisibleMetrics.HasFlag(Metric.Clock)) fields.Add($"Saat {Value(gpu.Clock, " MHz")}");
+        if (VisibleMetrics.HasFlag(Metric.Clock)) fields.Add($"Clock {Value(gpu.Clock, " MHz")}");
         bool used = VisibleMetrics.HasFlag(Metric.VramUsed);
         bool total = VisibleMetrics.HasFlag(Metric.VramTotal);
         if (used || total)
         {
-            string usage = gpu.UsedGiB?.ToString("0.0") ?? "—";
-            string capacity = gpu.TotalGiB?.ToString("0.#") ?? "—";
+            string usage = Number(gpu.UsedGiB, "0.0");
+            string capacity = Number(gpu.TotalGiB, "0.#");
             if (used && total) fields.Add($"VRAM {usage}/{capacity} GiB");
             else if (used) fields.Add($"VRAM {usage} GiB");
-            else fields.Add($"Toplam VRAM {capacity} GiB");
+            else fields.Add($"Total VRAM {capacity} GiB");
         }
         if (VisibleMetrics.HasFlag(Metric.Runtime)) fields.Add(frame?.Runtime ?? knownRuntime ?? "API —");
         if (VisibleMetrics.HasFlag(Metric.Process)) fields.Add(process);
         if (fields.Count == 0) return string.Empty;
-        if (preview) fields.Insert(0, "Önizleme");
+        if (preview) fields.Insert(0, "Preview");
         return string.Join("   ·   ", fields);
     }
 
     private static string Value(int? value, string unit) => value is int v ? $"{v}{unit}" : "—";
+    private static string Number(double? value, string format) => value?.ToString(format, CultureInfo.InvariantCulture) ?? "—";
 }

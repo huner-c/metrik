@@ -49,12 +49,12 @@ internal sealed class FrameCapture : IDisposable
         Marshal.StructureToPtr(properties, _properties, false);
         Marshal.Copy(new char[_name.Length + 1], 0, _properties + offset, _name.Length + 1);
 
-        string stage = "ETW oturumu";
+        string stage = "ETW session";
         uint status = StartTrace(out ulong session, _name, _properties);
         if (status == 0)
         {
             _session = session;
-            stage = "DirectX izni";
+            stage = "DirectX permissions";
             uint dxgi = EnableTraceEx2(_session, in DxgiProvider, 1, 0, EventsKeyword, 0, 0, 0);
             uint d3d9 = EnableTraceEx2(_session, in D3d9Provider, 1, 0, EventsKeyword, 0, 0, 0);
             status = dxgi != 0 ? dxgi : d3d9;
@@ -62,7 +62,7 @@ internal sealed class FrameCapture : IDisposable
 
         if (status == 0)
         {
-            stage = "ETW okuma";
+            stage = "ETW reader";
             nint loggerName = Marshal.StringToHGlobalUni(_name);
             try
             {
@@ -96,7 +96,7 @@ internal sealed class FrameCapture : IDisposable
         ulong handle = _consumer;
         uint status = ProcessTrace(ref handle, 1, 0, 0);
         if (status != 0 && status != 1223)
-            _error = $"ETW akışı ({status}): {new Win32Exception((int)status).Message}";
+            _error = $"ETW stream ({status}): {new Win32Exception((int)status).Message}";
     }
 
     public void SetTarget(uint pid)

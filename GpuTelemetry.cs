@@ -17,7 +17,7 @@ internal sealed unsafe class GpuTelemetry : IDisposable
     private const int AdlRadeonVendor = 1002;
     private static readonly DriverAllocate Allocate = size => size > 0 ? Marshal.AllocHGlobal(size) : 0;
 
-    private readonly string _name = "GPU sensörü bulunamadı";
+    private readonly string _name = "No GPU sensor found";
     private readonly long _capacity;
     private readonly int _index = -1;
     private nint _context;

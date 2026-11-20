@@ -108,7 +108,7 @@ internal sealed class MetrikApp : ApplicationContext
     private readonly Task _sensorWorker;
     private readonly FrameCapture _capture = new();
     private readonly bool _hotkey;
-    private volatile GpuReading _gpu = new("GPU okunuyor…");
+    private volatile GpuReading _gpu = new("Reading GPU sensors…");
     private bool _enabled;
     private bool _preview;
     private TabletFeed? _tabletFeed;
@@ -143,13 +143,13 @@ internal sealed class MetrikApp : ApplicationContext
         _control.HotkeyPressed += ToggleOverlay;
         _hotkey = NativeWindows.RegisterHotKey(_control.Handle, HotkeyId, 0x4006, (uint)Keys.F10);
 
-        _menu.Items.Add("Metrik'i aç", null, (_, _) => ShowControls());
+        _menu.Items.Add("Open Metrik", null, (_, _) => ShowControls());
         _toggle = new ToolStripMenuItem(null, null, (_, _) => ToggleOverlay());
-        _previewItem = new ToolStripMenuItem("Önizlemeyi aç", null, (_, _) => TogglePreview());
+        _previewItem = new ToolStripMenuItem("Show preview", null, (_, _) => TogglePreview());
         _menu.Items.Add(_toggle);
         _menu.Items.Add(_previewItem);
         _menu.Items.Add(new ToolStripSeparator());
-        _menu.Items.Add("Çıkış", null, (_, _) => ExitThread());
+        _menu.Items.Add("Exit", null, (_, _) => ExitThread());
         _tray = new NotifyIcon { Icon = _icon, Text = "Metrik", ContextMenuStrip = _menu, Visible = true };
         _tray.DoubleClick += (_, _) => ShowControls();
 
@@ -182,7 +182,7 @@ internal sealed class MetrikApp : ApplicationContext
         catch (OperationCanceledException) when (_shutdown.IsCancellationRequested) { }
         catch (Exception e) when (e is ExternalException or DllNotFoundException or EntryPointNotFoundException)
         {
-            _gpu = new("GPU sensörleri kullanılamıyor");
+            _gpu = new("GPU sensors unavailable");
         }
     }
 
@@ -241,12 +241,12 @@ internal sealed class MetrikApp : ApplicationContext
             _nextTabletUpdate = Environment.TickCount64 + 1000;
             string frameStatus = (error, _capture.AccessDenied, frame, status) switch
             {
-                (not null, true, _, _) => "FPS için yönetici izni gerekiyor",
-                (not null, _, _, _) => "Kare ölçümü kullanılamıyor",
-                (_, _, { IsLastSample: true }, _) => "Son kare ölçümü",
-                (_, _, not null, _) => "Canlı DirectX ölçümü",
-                (_, _, _, TrackingStatus.SettingsFocused) => "FPS için oyuna dön",
-                _ => "Aktif DirectX oyunu bekleniyor"
+                (not null, true, _, _) => "FPS capture requires administrator access",
+                (not null, _, _, _) => "Frame capture unavailable",
+                (_, _, { IsLastSample: true }, _) => "Last frame reading",
+                (_, _, not null, _) => "Live DirectX capture",
+                (_, _, _, TrackingStatus.SettingsFocused) => "Return to the game for FPS",
+                _ => "Waiting for an active DirectX game"
             };
             feed.Publish(new(frame, _runtime is null ? null : _process, _runtime, frameStatus, gpu));
             if (_control.Visible) UpdateTabletControls();
@@ -257,7 +257,7 @@ internal sealed class MetrikApp : ApplicationContext
         if (_preview && _enabled)
         {
             Rectangle screen = Screen.FromHandle(_control.Handle).WorkingArea;
-            _hud.Display(screen, _settings.Format(new(119.8, 8.35, "DXGI"), gpu, "Örnek oyun", true), _settings.ScalePercent);
+            _hud.Display(screen, _settings.Format(new(119.8, 8.35, "DXGI"), gpu, "Sample game", true), _settings.ScalePercent);
         }
         else if (_enabled && _target is { } target && _runtime is not null && error is null)
         {
@@ -347,8 +347,8 @@ internal sealed class MetrikApp : ApplicationContext
         catch (SocketException e)
         {
             _tabletError = e.SocketErrorCode == SocketError.AddressAlreadyInUse
-                ? $"UDP {TabletServer.Port} kullanımda."
-                : $"Tablet yayını başlatılamadı ({e.ErrorCode}).";
+                ? $"UDP port {TabletServer.Port} is already in use."
+                : $"Could not start tablet streaming (socket error {e.ErrorCode}).";
             StopFeedIfIdle();
         }
     }
@@ -359,7 +359,7 @@ internal sealed class MetrikApp : ApplicationContext
         if (adb is null && chooseAdb) adb = _control.ChooseAdb();
         if (adb is null)
         {
-            _usbError = "USB için Android SDK Platform-Tools içindeki adb.exe dosyasını seç.";
+            _usbError = "Select adb.exe from Android SDK Platform-Tools to use USB.";
             return;
         }
 
@@ -398,11 +398,11 @@ internal sealed class MetrikApp : ApplicationContext
             if (process is null) return;
             await process.WaitForExitAsync();
 
-            _firewallStatus = process.ExitCode == 0 ? "Yerel ağ izni kaydedildi."
-                : $"Yerel ağ izni eklenemedi (0x{process.ExitCode:X8}).";
+            _firewallStatus = process.ExitCode == 0 ? "Local network access granted."
+                : $"Could not grant local network access (0x{process.ExitCode:X8}).";
         }
         catch (Win32Exception e) when (e.NativeErrorCode == 1223) { }
-        catch (Win32Exception e) { _firewallStatus = e.Message; }
+        catch (Win32Exception e) { _firewallStatus = $"Could not open the firewall prompt (Windows error {e.NativeErrorCode})."; }
         if (!_control.IsDisposed) UpdateTabletControls();
     }
 
@@ -410,13 +410,13 @@ internal sealed class MetrikApp : ApplicationContext
     {
         _settings = settings;
         _control.SetSettings(settings);
-        if (!settings.Save()) _control.ShowError("Ayarlar bu oturumda geçerli. Dosyaya yazılamadı.");
+        if (!settings.Save()) _control.ShowError("Settings could only be applied for this session.");
     }
 
     private void SyncMenu()
     {
-        _toggle.Text = _enabled ? "Oyun göstergesini gizle" : "Oyun göstergesini aç";
-        _previewItem.Text = _preview ? "Önizlemeyi kapat" : "Önizlemeyi aç";
+        _toggle.Text = _enabled ? "Hide game overlay" : "Show game overlay";
+        _previewItem.Text = _preview ? "Hide preview" : "Show preview";
         Refresh();
     }
 
@@ -444,7 +444,7 @@ internal sealed class MetrikApp : ApplicationContext
             if (elevated is not null) ExitThread();
         }
         catch (Win32Exception e) when (e.NativeErrorCode == 1223) { }
-        catch (Win32Exception e) { _control.ShowError(e.Message); }
+        catch (Win32Exception e) { _control.ShowError($"Could not restart as administrator (Windows error {e.NativeErrorCode})."); }
     }
 
     protected override void ExitThreadCore()

@@ -13,7 +13,7 @@ internal sealed class CpuTelemetry : IDisposable
 {
     private const double BytesPerGiB = 1024d * 1024 * 1024;
     private readonly string _name = (Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0",
-        "ProcessorNameString", null) as string)?.Trim() ?? "İşlemci";
+        "ProcessorNameString", null) as string)?.Trim() ?? "CPU";
     private readonly nint _query;
     private readonly nint _clock;
     private readonly HttpClient _hardwareMonitor = new(new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false })

@@ -73,7 +73,7 @@ internal sealed class TabletServer : IDisposable
         catch (ObjectDisposedException) when (stop.IsCancellationRequested) { }
         catch (SocketException e)
         {
-            if (!stop.IsCancellationRequested) _error = e.Message;
+            if (!stop.IsCancellationRequested) _error = $"LAN streaming stopped (socket error {e.ErrorCode}).";
         }
     }
 

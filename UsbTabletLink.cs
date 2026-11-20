@@ -19,7 +19,7 @@ internal sealed class UsbTabletLink : IDisposable
     private readonly TabletFeed _feed;
     private readonly CancellationTokenSource _stop = new();
     private readonly Task _worker;
-    private volatile string _status = "USB cihazı aranıyor…";
+    private volatile string _status = "Looking for a USB device…";
 
     public string Status => _status;
 
@@ -73,10 +73,10 @@ internal sealed class UsbTabletLink : IDisposable
                     {
                         using var connection = new TcpClient(AddressFamily.InterNetwork) { NoDelay = true };
                         await connection.ConnectAsync(IPAddress.Loopback, active.Port, stop).ConfigureAwait(false);
-                        _status = "Tablette USB kablosu modunu ve bağlantı kodunu kontrol et.";
+                        _status = "Check the USB cable mode and pairing code on your tablet.";
                         if (await Pair(connection.GetStream(), stop).ConfigureAwait(false))
                         {
-                            _status = "USB bağlı · Canlı ölçümler gönderiliyor";
+                            _status = "USB connected · Sending live metrics";
                             await Transmit(connection.GetStream(), stop).ConfigureAwait(false);
                         }
                     }
@@ -85,19 +85,19 @@ internal sealed class UsbTabletLink : IDisposable
                 {
                     if (bridge is { } failed) await Remove(failed).ConfigureAwait(false);
                     bridge = null;
-                    _status = "USB bağlantısı yeniden deneniyor…";
+                    _status = "Retrying the USB connection…";
                 }
                 catch (IOException)
                 {
-                    _status = "Tablette USB kablosu modunu ve bağlantı kodunu kontrol et.";
+                    _status = "Check the USB cable mode and pairing code on your tablet.";
                 }
                 catch (Win32Exception)
                 {
-                    _status = "ADB çalıştırılamadı. Android SDK Platform-Tools’u kontrol et.";
+                    _status = "Could not run ADB. Check Android SDK Platform-Tools.";
                 }
                 catch (OperationCanceledException) when (!stop.IsCancellationRequested)
                 {
-                    _status = "USB yanıtı bekleniyor…";
+                    _status = "Waiting for a USB response…";
                 }
 
                 await Task.Delay(1500, stop).ConfigureAwait(false);
@@ -118,15 +118,15 @@ internal sealed class UsbTabletLink : IDisposable
             _status = device.Error switch
             {
                 var error when error.Contains("unauthorized", StringComparison.OrdinalIgnoreCase)
-                    => "Tabletin kilidini aç ve USB hata ayıklama iznini onayla.",
+                    => "Unlock your tablet and allow USB debugging.",
                 var error when error.Contains("more than one", StringComparison.OrdinalIgnoreCase)
-                    => "Metrik için yalnızca bir Android USB cihazı bağlı olmalı.",
+                    => "Connect one Android device over USB at a time.",
                 var error when error.Contains("device offline", StringComparison.OrdinalIgnoreCase)
-                    => "Tablet USB bağlantısını hazırlıyor. Metrik yeniden deniyor.",
+                    => "The tablet is preparing its USB connection. Retrying…",
                 var error when error.Contains("daemon", StringComparison.OrdinalIgnoreCase) ||
                     error.Contains("server", StringComparison.OrdinalIgnoreCase)
-                    => "Yerel ADB hizmeti başlatılamadı. Metrik yeniden deniyor.",
-                _ => "Tableti USB ile bağla ve USB hata ayıklamayı aç."
+                    => "Could not start the local ADB server. Retrying…",
+                _ => "Connect your tablet over USB and enable USB debugging."
             };
             return null;
         }
@@ -136,7 +136,7 @@ internal sealed class UsbTabletLink : IDisposable
         if (forward.ExitCode == 0 && int.TryParse(forward.Output, NumberStyles.None, CultureInfo.InvariantCulture, out int port)
             && port is > 0 and <= 65535) return new(serial, port);
 
-        _status = "ADB, USB bağlantısını açamadı. USB kablosunu ve Platform-Tools sürümünü kontrol et.";
+        _status = "ADB could not open the USB connection. Check the cable and Platform-Tools version.";
         return null;
     }
 

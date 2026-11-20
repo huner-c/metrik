@@ -72,14 +72,14 @@ internal sealed class ControlWindow : Form
         Row(status, _gpu);
         Row(content, status);
 
-        Row(content, Heading("Görünen değerler"));
+        Row(content, Heading("Overlay metrics"));
         var metrics = Flow();
         foreach (var (flag, title) in new (Metric, string)[]
         {
-            (Metric.Fps, "FPS"), (Metric.FrameTime, "Kare süresi"), (Metric.Load, "GPU kullanımı"),
-            (Metric.Temperature, "GPU sıcaklığı"), (Metric.Hotspot, "Hotspot"), (Metric.Clock, "GPU saat hızı"),
-            (Metric.VramUsed, "VRAM kullanımı"), (Metric.VramTotal, "Toplam VRAM"),
-            (Metric.Runtime, "Grafik API"), (Metric.Process, "Oyun adı")
+            (Metric.Fps, "FPS"), (Metric.FrameTime, "Frame time"), (Metric.Load, "GPU usage"),
+            (Metric.Temperature, "GPU temperature"), (Metric.Hotspot, "Hotspot"), (Metric.Clock, "GPU clock"),
+            (Metric.VramUsed, "VRAM usage"), (Metric.VramTotal, "Total VRAM"),
+            (Metric.Runtime, "Graphics API"), (Metric.Process, "Game name")
         })
         {
             var box = new CheckBox
@@ -96,18 +96,18 @@ internal sealed class ControlWindow : Form
         }
         Row(content, metrics);
 
-        Row(content, Heading("Gösterge boyutu"));
+        Row(content, Heading("Overlay size"));
         var sizes = Flow();
-        var percent = new Label { AutoSize = true, Text = $"%{settings.ScalePercent}", Anchor = AnchorStyles.Left };
+        var percent = new Label { AutoSize = true, Text = $"{settings.ScalePercent}%", Anchor = AnchorStyles.Left };
         var scale = new TrackBar
         {
             Minimum = OverlaySettings.MinimumScale, Maximum = OverlaySettings.MaximumScale,
             Value = settings.ScalePercent, TickFrequency = 25, SmallChange = 5, LargeChange = 25,
-            AccessibleName = "Gösterge boyutu, yüzde", Width = 180
+            AccessibleName = "Overlay size, percent", Width = 180
         };
         scale.ValueChanged += (_, _) =>
         {
-            percent.Text = $"%{scale.Value}";
+            percent.Text = $"{scale.Value}%";
             ChangeSettings(_settings with { ScalePercent = scale.Value });
         };
         sizes.Controls.Add(scale);
@@ -115,9 +115,9 @@ internal sealed class ControlWindow : Form
         Row(content, sizes);
 
         var buttons = Flow();
-        _toggle = MakeButton("Oyun göstergesini gizle", true);
-        _preview = MakeButton("Önizlemeyi aç");
-        _elevate = MakeButton("Yönetici olarak yeniden aç");
+        _toggle = MakeButton("Hide game overlay", true);
+        _preview = MakeButton("Show preview");
+        _elevate = MakeButton("Restart as administrator");
         _toggle.Click += (_, _) => OverlayToggled?.Invoke();
         _preview.Click += (_, _) => PreviewToggled?.Invoke();
         _elevate.Click += (_, _) => RunElevated?.Invoke();
@@ -127,15 +127,15 @@ internal sealed class ControlWindow : Form
         _hint.Dock = DockStyle.Fill;
         Row(content, _hint);
 
-        Row(content, Heading("Tablet bağlantısı"));
+        Row(content, Heading("Tablet connection"));
         var tabletButtons = Flow();
-        _tablet = MakeButton("Yerel ağ yayınını aç");
+        _tablet = MakeButton("Start LAN stream");
         _tablet.Click += (_, _) => TabletToggled?.Invoke();
         tabletButtons.Controls.Add(_tablet);
-        _usb = MakeButton("USB yayınını aç");
+        _usb = MakeButton("Start USB stream");
         _usb.Click += (_, _) => UsbToggled?.Invoke();
         tabletButtons.Controls.Add(_usb);
-        _firewall = MakeButton("Yerel ağ izni ver");
+        _firewall = MakeButton("Allow LAN access");
         _firewall.Click += (_, _) => TabletFirewallRequested?.Invoke();
         _firewall.Visible = false;
         tabletButtons.Controls.Add(_firewall);
@@ -214,49 +214,49 @@ internal sealed class ControlWindow : Form
     public void RefreshStatus(bool enabled, bool preview, string? error, bool accessDenied, bool hotkey,
         TrackingStatus status, GpuReading sensors, bool sharing)
     {
-        _toggle.Text = enabled ? "Oyun göstergesini gizle" : "Oyun göstergesini aç";
-        _preview.Text = preview ? "Önizlemeyi kapat" : "Önizlemeyi aç";
+        _toggle.Text = enabled ? "Hide game overlay" : "Show game overlay";
+        _preview.Text = preview ? "Hide preview" : "Show preview";
         _elevate.Visible = accessDenied;
         _capture.ForeColor = error is null ? Palette.Mint : Palette.Amber;
         _capture.Text = (error, accessDenied, enabled, preview, status) switch
         {
-            (_, _, false, _, _) when !sharing => "Oyun göstergesi gizli",
-            (_, _, _, true, _) => "Önizleme açık · FPS ve kare süresi örnektir",
-            (not null, true, _, _, _) => "FPS için yönetici izni gerekiyor",
-            (not null, _, _, _, _) => $"Kare ölçümü açılamadı · {error.Split(':')[0]}",
-            _ when enabled && _settings.VisibleMetrics == Metric.None && !sharing => "Göstermek istediğin değerleri seç",
-            (_, _, _, _, TrackingStatus.SettingsFocused) => "Ayarlar önde · Ölçüm için oyuna dön",
-            (_, _, _, _, TrackingStatus.ReceivingFrames) => "DirectX kareleri alınıyor",
-            (_, _, _, _, TrackingStatus.WaitingForFrames) => "Oyun algılandı · Yeni kare bekleniyor",
-            _ => "Aktif DirectX oyunu bekleniyor"
+            (_, _, false, _, _) when !sharing => "Game overlay hidden",
+            (_, _, _, true, _) => "Preview active · FPS and frame time are sample values",
+            (not null, true, _, _, _) => "FPS capture requires administrator access",
+            (not null, _, _, _, _) => $"Could not start frame capture · {error.Split(':')[0]}",
+            _ when enabled && _settings.VisibleMetrics == Metric.None && !sharing => "Choose which metrics to display",
+            (_, _, _, _, TrackingStatus.SettingsFocused) => "Return to the game to capture frames",
+            (_, _, _, _, TrackingStatus.ReceivingFrames) => "Capturing DirectX frames",
+            (_, _, _, _, TrackingStatus.WaitingForFrames) => "Game detected · Waiting for frames",
+            _ => "Waiting for an active DirectX game"
         };
-        _gpu.Text = sensors.Available ? $"{sensors.Name}  ·  Sensörler aktif" : sensors.Name;
-        _hint.Text = _lastError ?? (hotkey ? "Ctrl + Shift + F10  ·  Göstergeyi aç / kapat"
-            : "Kısayol kullanımda. Bildirim alanından açıp kapatabilirsin.");
+        _gpu.Text = sensors.Available ? $"{sensors.Name}  ·  Sensors active" : sensors.Name;
+        _hint.Text = _lastError ?? (hotkey ? "Ctrl + Shift + F10  ·  Toggle overlay"
+            : "Shortcut already in use. Toggle the overlay from the notification area.");
     }
 
     public void RefreshTablet(bool started, string? addresses, string? code, string? error, string? firewallStatus)
     {
-        _tablet.Text = started ? "Yerel ağ yayınını kapat" : "Yerel ağ yayınını aç";
+        _tablet.Text = started ? "Stop LAN stream" : "Start LAN stream";
         _firewall.Visible = started && error is null;
         _tabletStatus.ForeColor = error is null ? Palette.Muted : Palette.Amber;
         _tabletStatus.Text = error ?? (started
-            ? string.IsNullOrEmpty(addresses) ? "Yerel ağ adresi bekleniyor…"
-                : $"PC IP: {addresses}  ·  Kod: {code}\n" + (firewallStatus ?? "Tableti aynı ağa bağla ve bu bilgileri Metrik’e gir.")
-            : "Yerel ağ bağlantısı kapalı.");
+            ? string.IsNullOrEmpty(addresses) ? "Waiting for a local network address…"
+                : $"PC address: {addresses}  ·  Code: {code}\n" + (firewallStatus ?? "Connect the tablet to the same network and enter these details in Metrik.")
+            : "LAN streaming is off.");
     }
 
     public void RefreshUsb(bool started, string? code, string? status)
     {
-        _usb.Text = started ? "USB yayınını kapat" : "USB yayınını aç";
-        _usbStatus.Text = started ? $"USB · Kod {code}\n{status}" : status ?? "USB bağlantısı kapalı.";
+        _usb.Text = started ? "Stop USB stream" : "Start USB stream";
+        _usbStatus.Text = started ? $"USB · Code {code}\n{status}" : status ?? "USB streaming is off.";
     }
 
     public string? ChooseAdb()
     {
         using var dialog = new OpenFileDialog
         {
-            Title = "Android SDK Platform-Tools içindeki adb.exe dosyasını seç",
+            Title = "Select adb.exe from Android SDK Platform-Tools",
             Filter = "Android Debug Bridge (adb.exe)|adb.exe",
             CheckFileExists = true
         };

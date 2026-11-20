@@ -1,78 +1,78 @@
 # Metrik
 
-![Metrik hız göstergesi](assets/metrik.png)
+![Metrik speedometer icon](assets/metrik.png)
 
-Metrik, Windows’ta oyun oynarken FPS, ortalama kare süresi ve sistem ölçümlerini gösterir. Oyun içi göstergeyi gizleyip aynı değerleri bir Android tabletten USB kablosuyla veya yerel ağ üzerinden takip edebilirsin. USB bağlantısı internet erişimi gerektirmez.
+Metrik shows FPS, average frame time, and hardware metrics while you play on Windows. Hide the in-game overlay and monitor the same readings on an Android tablet over USB or your local network. The USB connection works without internet access.
 
-## İndir
+## Download
 
-| Uygulama | Gereksinim |
+| App | Requirements |
 | --- | --- |
-| [Metrik-Windows-x64.zip](https://github.com/huner-c/metrik/releases/latest/download/Metrik-Windows-x64.zip) | Windows x64 ve [.NET 10 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) |
-| [Metrik-Tablet.apk](https://github.com/huner-c/metrik/releases/latest/download/Metrik-Tablet.apk) | Android 4.4 ve üzeri |
+| [Metrik-Windows-x64.zip](https://github.com/huner-c/metrik/releases/latest/download/Metrik-Windows-x64.zip) | Windows x64 and the [.NET 10 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) |
+| [Metrik-Tablet.apk](https://github.com/huner-c/metrik/releases/latest/download/Metrik-Tablet.apk) | Android 4.4 or later |
 
-Windows ZIP’ini bir klasöre çıkart ve `Metrik.exe` dosyasını aç. Tabletten izleyeceksen APK’yı Android cihazına kur ve PC’de Metrik’i açık tut.
+Extract the Windows ZIP to a folder and open `Metrik.exe`. To use the tablet dashboard, install the APK and keep Metrik running on your PC.
 
-## Windows’ta kullanım
+## Windows controls
 
-- Oyunu pencere veya **Kenarlıksız Tam Ekran (Borderless)** modunda öne getir. DirectX kareleri görülünce panel oyun alanının sol üstünde açılır.
-- `Ctrl + Shift + F10` oyun göstergesini açıp kapatır. Metrik’i küçültünce uygulama bildirim alanına geçer.
-- **Görünen değerler** bölümünden gösterilecek alanları seç. **Gösterge boyutu** ile yazıyı %50–%200 arasında ölçekle.
-- **Önizlemeyi aç** ile göstergeyi masaüstünde dene. Önizlemede FPS ve kare süresi örnektir. Ekran kartı değerleri canlıdır.
-- FPS erişimi isteyen sistemlerde **Yönetici olarak yeniden aç** düğmesini kullan.
+- Bring the game to the foreground in windowed or **borderless fullscreen** mode. The overlay appears in the upper-left corner once Metrik receives DirectX frame data.
+- Press `Ctrl + Shift + F10` to toggle the game overlay. Minimizing Metrik sends it to the notification area.
+- Choose the values under **Overlay metrics** and adjust the text between 50% and 200% under **Overlay size**.
+- Select **Show preview** to view the overlay on your desktop. The preview uses sample FPS and frame time values and live GPU readings.
+- Select **Restart as administrator** if Windows requires elevated access for frame capture.
 
-## Android tabletten izleme
+## Android dashboard
 
-Tablet yayını ilk açılışta kapalıdır. USB veya yerel ağ bağlantısını kurduktan sonra **Oyun göstergesini gizle** seçeneğiyle FPS ölçümünü tablette sürdürebilirsin. Panel saniyede bir güncellenir. Bağlantı kodu ve yayın tercihleri cihazlarda saklanır.
+Tablet streaming is off by default. After connecting over USB or LAN, select **Hide game overlay** on Windows to keep FPS capture running on the tablet. The dashboard updates once per second. Each device stores its connection settings locally.
 
-### USB kablosuyla bağlantı
+### USB cable
 
-1. Tabletin **Geliştirici seçenekleri** bölümünden **USB hata ayıklama**yı aç. Galaxy Tab 4’te bu menüyü görünür yapmak için **Ayarlar → Genel → Cihaz hakkında → Yapım numarası**na yedi kez dokun.
-2. Tableti veri aktarabilen USB kablosuyla PC’ye bağla. Tabletin kilidini aç ve Windows bilgisayarı için gelen **USB hata ayıklamasına izin ver** istemini onayla.
-3. PC’de **USB yayınını aç** düğmesine bas. Metrik var olan `adb.exe` dosyasını otomatik arar ve PC’deki ADB hizmetini gerektiğinde başlatır. Dosya seçim penceresi açılırsa Android SDK Platform-Tools klasöründeki `adb.exe` dosyasını seç. [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
-4. Tablette **Bağlantı → USB kablosu** seçeneğini seç ve Metrik’in PC’de gösterdiği altı haneli kodla bağlan. Daha önce kaydettiğin kod aynıysa **Bağlan**’a dokunman yeterli.
+1. On your tablet, turn on **USB debugging** in **Developer options**. On the Galaxy Tab 4, tap **Settings → General → About device → Build number** seven times to reveal that menu.
+2. Connect the tablet to the PC with a USB data cable. Unlock the tablet and approve the **Allow USB debugging** prompt.
+3. In Metrik on Windows, select **Start USB stream**. Metrik looks for `adb.exe` and starts the local ADB server when needed. If prompted for a file, select `adb.exe` from Android SDK Platform-Tools. [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)
+4. In the tablet app, open **Connection → USB cable**, enter the six-digit code shown on Windows, and select **Connect**. If the code is already saved, select **Connect** directly.
 
-USB bağlantısı çalışırken PC’nin Ethernet kablosunu çekebilir ve Wi-Fi’ı kapatabilirsin. Kabloyu çıkarıp takarsan USB yayını otomatik yeniden bağlanmayı dener.
+With the USB link active, you can unplug the PC’s Ethernet cable or turn off Wi-Fi. Metrik tries to reconnect automatically if you unplug and reconnect the USB cable.
 
-### Yerel ağ bağlantısı
+### Local network
 
-1. PC’yi ve tableti aynı yerel ağa bağla. PC Ethernet, tablet Wi-Fi kullanabilir.
-2. Windows’ta **Yerel ağ yayınını aç** düğmesine bas. Ağ bağlantısı engellenirse **Yerel ağ izni ver** düğmesi bu Metrik kopyası için aynı alt ağdan UDP 47937 erişimi ekler. Windows yönetici onayı ister.
-3. Tablette **Bağlantı → Yerel ağ** seçeneğini seç, PC’nin IP adresini ve Windows’ta görünen altı haneli kodu gir.
+1. Connect the PC and tablet to the same local network. The PC can use Ethernet while the tablet uses Wi-Fi.
+2. On Windows, select **Start LAN stream**. If the firewall blocks the connection, select **Allow LAN access**. Windows asks for administrator approval to allow UDP port 47937 from the local subnet for this copy of Metrik.
+3. On the tablet, select **Connection → Local network** and enter the PC’s IP address and six-digit code shown on Windows.
 
-Misafir Wi-Fi ağı cihazlar arasındaki bağlantıyı engelleyebilir. USB ve yerel ağ aynı bağlantı kodunu kullanır.
+Guest Wi-Fi can isolate devices. USB and LAN use the same pairing code.
 
-## Ölçüm
+## Metrics
 
-| Alan | Değerler |
+| Area | Readings |
 | --- | --- |
-| Oyun | FPS, ortalama kare süresi, oyun adı ve DirectX API’si |
-| Radeon GPU | Kullanım, sıcaklık, hotspot, çekirdek ve bellek saat hızları, VRAM, fan ve güç |
-| CPU ve RAM | İşlemci kullanımı, Windows’un raporladığı saat hızı, mantıksal işlemci sayısı ve RAM kullanımı |
+| Game | FPS, average frame time, game name, and DirectX API |
+| Radeon GPU | Usage, temperature, hotspot, core and memory clocks, VRAM, fan speed, and power |
+| CPU and RAM | CPU usage, Windows-reported clock speed, logical processor count, and RAM usage |
 
-Metrik, Windows Event Tracing (ETW) ile Direct3D 9 ve DXGI (Direct3D 10/11/12) sunum olaylarını izler. Odaktaki işlemin en sık sunum yapan swap chain'ini kullanır ve son iki saniyedeki başarılı `Present` çağrıları üzerinden FPS ve kare süresini hesaplar. FPS ölçümü uygulamanın yaptığı sunumların hızıdır. Frame Generation ve monitörde gerçekten görüntülenen kare sayısı farklı olabilir.
+Metrik uses Windows Event Tracing (ETW) to track Direct3D 9 and DXGI (Direct3D 10, 11, and 12) presentation events. It measures successful `Present` calls from the busiest swap chain of the foreground process over a two-second window. The rate of presentation calls can differ from the number of frames displayed on the monitor, especially with frame generation.
 
-Yeni kare verisi gecikince Metrik, yaklaşık iki saniyenin ardından son ölçümü işaretler. Beş saniye sonunda FPS ve kare süresi `—` olur. Donanım ölçümleri ayrı güncellenir ve okunamayan sensörler `—` olarak görünür.
+When new frame data is delayed, Metrik marks the last reading after about two seconds. After five seconds, FPS and frame time show `—`. Hardware readings update independently. Unavailable sensors also show `—`.
 
-Oyun göstergesi, fare tıklamalarını alttaki oyuna geçiren bir Windows penceresidir. Özel tam ekran modunda görünmeyebilir. Canlı GPU sensörleri AMD Radeon sürücüsünün sağladığı değerlere bağlıdır. Birden fazla kart varsa Metrik öncelikle Windows’un birincil Radeon kartını seçer.
+The overlay passes clicks through to the game and may be hidden in exclusive fullscreen mode. GPU readings depend on the AMD Radeon driver and available sensors. With several adapters, Metrik prefers the primary Radeon adapter.
 
-CPU paket sıcaklığı ve gücü için isteğe bağlı olarak LibreHardwareMonitor’un `127.0.0.1` seçeneğini sunan bir sürümünü kullan. **Options → Remote Web Server** menüsünde adresi `127.0.0.1`, portu `8085` olarak ayarla ve **Run** seçeneğini aç. Bu yerel bağlantıda kimlik doğrulamayı kapalı bırak. LibreHardwareMonitor’da bulunan CPU paket sensörleri Metrik’te de görünür. [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)
+For optional CPU package temperature and power, use a build of LibreHardwareMonitor that can bind its web server to `127.0.0.1`. Under **Options → Remote Web Server**, set the address to `127.0.0.1` and the port to `8085`, then select **Run**. Leave authentication disabled for this loopback connection. Metrik displays the CPU package readings supplied by LibreHardwareMonitor. [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)
 
-## Kaynaktan derleme
+## Build from source
 
-.NET 10 SDK ile proje klasöründe çalıştır. Metrik açıksa yayından önce bildirim alanından **Çıkış** yap.
+For Windows, run these commands from the project root with the .NET 10 SDK. If Metrik is running, exit it from the notification area before publishing.
 
 ```powershell
 dotnet publish -c Release --self-contained false -o .\dist\Metrik-Windows-USB -p:DebugType=None -p:DebugSymbols=false
 Copy-Item .\README.md .\dist\Metrik-Windows-USB\README.md -Force
 ```
 
-Android APK’sını derlemek için Windows’ta JDK 17 veya üstü, Android SDK platformları 19 ve 35, Build Tools 35.0.0 gerekir. `JAVA_HOME` ve `ANDROID_HOME` ayarlandıktan sonra proje klasöründe çalıştır.
+For Android, install JDK 17 or later, Android SDK platforms 19 and 35, and Build Tools 35.0.0. Set `JAVA_HOME` and `ANDROID_HOME`, then run the build script.
 
 ```powershell
 .\android\build.ps1
 ```
 
-APK `android/build/Metrik-Tablet.apk` konumuna yazılır. Derleme imza parolasını sorar. Etkileşimsiz derlemelerde `METRIK_ANDROID_KEYSTORE_PASSWORD` ortam değişkenini kullanabilirsin. Aynı tablete sonraki derlemeleri güncelleme olarak kurabilmek için `android/.signing` altındaki yerel imza anahtarını ve parolasını sakla.
+The APK is written to `android/build/Metrik-Tablet.apk`. The build prompts for the signing password. For non-interactive builds, set `METRIK_ANDROID_KEYSTORE_PASSWORD`. Keep the local key in `android/.signing` and its password to install later builds as updates.
 
-[Windows ETW](https://learn.microsoft.com/windows/win32/etw/configuring-and-starting-an-event-tracing-session) · [AMD Display Library](https://gpuopen-librariesandsdks.github.io/adl/) · [Windows katmanlı pencereler](https://learn.microsoft.com/windows/win32/winmsg/window-features#layered-windows)
+[Windows ETW](https://learn.microsoft.com/windows/win32/etw/configuring-and-starting-an-event-tracing-session) · [AMD Display Library](https://gpuopen-librariesandsdks.github.io/adl/) · [Windows layered windows](https://learn.microsoft.com/windows/win32/winmsg/window-features#layered-windows)

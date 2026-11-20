@@ -55,10 +55,10 @@ if ($readPassword) {
     $password = if (Test-Path -LiteralPath $savedPassword) {
         Import-Clixml -LiteralPath $savedPassword
     } else {
-        Read-Host 'Metrik Android imza parolası' -AsSecureString
+        Read-Host 'Metrik Android signing password' -AsSecureString
     }
     if ($password -isnot [System.Security.SecureString] -or $password.Length -lt 6) {
-        throw 'İmza parolası en az 6 karakter olmalı.'
+        throw 'The signing password must be at least 6 characters long.'
     }
     $env:METRIK_ANDROID_KEYSTORE_PASSWORD = [Net.NetworkCredential]::new('', $password).Password
 }

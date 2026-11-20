@@ -36,7 +36,6 @@ public final class DashboardActivity extends Activity {
     private static final int TEXT = 0xffecf7f4, MUTED = 0xffacc4c2, MINT = 0xff82f5c9;
     private static final int SKY = 0xffa3d9ff, AMBER = 0xfffdc371;
     private static final String EMPTY = "—";
-    private static final Locale TURKISH = new Locale("tr", "TR");
     private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
     private static final int MATCH = ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -91,7 +90,7 @@ public final class DashboardActivity extends Activity {
         TextView title = text("Metrik", 29, TEXT, true);
         header.addView(title, new LinearLayout.LayoutParams(0, WRAP, 1));
         Button settings = new Button(this);
-        settings.setText("Bağlantı");
+        settings.setText("Connection");
         settings.setTextSize(14 * dashboardScale);
         settings.setTextColor(TEXT);
         settings.setTypeface(Typeface.DEFAULT_BOLD);
@@ -124,43 +123,43 @@ public final class DashboardActivity extends Activity {
         LinearLayout frameCard = card();
         LinearLayout frames = row();
         fps = metric(frames, "FPS", MINT, 31);
-        frameTime = metric(frames, "Kare süresi", TEXT, 31);
+        frameTime = metric(frames, "Frame time", TEXT, 31);
         frameCard.addView(frames);
-        game = text("Bağlantı bekleniyor", 13, MUTED, false);
+        game = text("Waiting for a connection", 13, MUTED, false);
         game.setMaxLines(2);
         game.setEllipsize(TextUtils.TruncateAt.END);
         add(frameCard, game, 7);
         add(root, frameCard, 12);
 
         LinearLayout gpu = card();
-        gpuName = device(gpu, "EKRAN KARTI", MINT);
+        gpuName = device(gpu, "GPU", MINT);
         gpuLoad = usage(gpu, MINT);
         gpuBar = addTrack(gpu, MINT);
         LinearLayout pair = metricRow(gpu);
-        gpuTemp = metric(pair, "GPU sıcaklığı", TEXT, 18);
+        gpuTemp = metric(pair, "GPU temperature", TEXT, 18);
         gpuHotspot = metric(pair, "Hotspot", TEXT, 18);
         pair = metricRow(gpu);
-        gpuClock = metric(pair, "GPU saat hızı", TEXT, 18);
-        gpuPower = metric(pair, "GPU gücü", TEXT, 18);
+        gpuClock = metric(pair, "GPU clock", TEXT, 18);
+        gpuPower = metric(pair, "GPU power", TEXT, 18);
         pair = metricRow(gpu);
-        vram = metric(pair, "VRAM kullanımı", TEXT, 18);
-        vramClock = metric(pair, "VRAM saat hızı", TEXT, 18);
+        vram = metric(pair, "VRAM usage", TEXT, 18);
+        vramClock = metric(pair, "VRAM clock", TEXT, 18);
         pair = metricRow(gpu);
-        vramTemp = metric(pair, "VRAM sıcaklığı", TEXT, 18);
-        gpuFan = metric(pair, "Fan hızı", TEXT, 18);
+        vramTemp = metric(pair, "VRAM temperature", TEXT, 18);
+        gpuFan = metric(pair, "Fan speed", TEXT, 18);
 
         LinearLayout cpu = card();
-        cpuName = device(cpu, "İŞLEMCİ", SKY);
+        cpuName = device(cpu, "CPU", SKY);
         cpuLoad = usage(cpu, SKY);
         cpuBar = addTrack(cpu, SKY);
         pair = metricRow(cpu);
-        cpuTemp = metric(pair, "CPU sıcaklığı", TEXT, 18);
-        cpuClock = metric(pair, "CPU saat hızı", TEXT, 18);
+        cpuTemp = metric(pair, "CPU temperature", TEXT, 18);
+        cpuClock = metric(pair, "CPU clock", TEXT, 18);
         pair = metricRow(cpu);
-        cpuPower = metric(pair, "Paket gücü", TEXT, 18);
-        cpuThreads = metric(pair, "Mantıksal işlemci", TEXT, 18);
+        cpuPower = metric(pair, "Package power", TEXT, 18);
+        cpuThreads = metric(pair, "Logical processors", TEXT, 18);
         pair = metricRow(cpu);
-        ram = metric(pair, "Sistem belleği", TEXT, 18);
+        ram = metric(pair, "System memory", TEXT, 18);
 
         if (wide) {
             LinearLayout hardware = row();
@@ -183,27 +182,27 @@ public final class DashboardActivity extends Activity {
         transport.setOrientation(LinearLayout.HORIZONTAL);
         RadioButton wifiMode = new RadioButton(this);
         wifiMode.setId(View.generateViewId());
-        wifiMode.setText("Yerel ağ");
+        wifiMode.setText("Local network");
         transport.addView(wifiMode);
         RadioButton usbMode = new RadioButton(this);
         final int usbId = View.generateViewId();
         usbMode.setId(usbId);
-        usbMode.setText("USB kablosu");
+        usbMode.setText("USB cable");
         transport.addView(usbMode);
         add(form, transport, 0);
         final TextView instructions = text("", 15, TEXT, false);
         add(form, instructions, 8);
         final EditText address = new EditText(this);
-        address.setHint("PC IP adresi");
-        address.setContentDescription("PC IP adresi");
+        address.setHint("PC IP address");
+        address.setContentDescription("PC IP address");
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         address.setFilters(new InputFilter[] {new InputFilter.LengthFilter(15)});
         address.setSingleLine();
         address.setText(host);
         add(form, address, 12);
         final EditText code = new EditText(this);
-        code.setHint("6 haneli bağlantı kodu");
-        code.setContentDescription("6 haneli bağlantı kodu");
+        code.setHint("6-digit pairing code");
+        code.setContentDescription("6-digit pairing code");
         code.setInputType(InputType.TYPE_CLASS_NUMBER);
         code.setFilters(new InputFilter[] {new InputFilter.LengthFilter(6)});
         code.setSingleLine();
@@ -214,13 +213,13 @@ public final class DashboardActivity extends Activity {
             @Override public void onCheckedChanged(RadioGroup group, int checkedId) {
                 boolean useUsb = checkedId == usbId;
                 address.setVisibility(useUsb ? View.GONE : View.VISIBLE);
-                update(instructions, useUsb ? "Tableti USB ile bağla. Windows’ta USB yayınını aç."
-                    : "Windows’ta Yerel ağ yayınını aç. PC ve tablet aynı ağa bağlı olmalı.");
+                update(instructions, useUsb ? "Connect the tablet over USB. Select Start USB stream on Windows."
+                    : "Select Start LAN stream on Windows. Keep the PC and tablet on the same network.");
             }
         });
         transport.check(usb ? usbId : wifiMode.getId());
-        final AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Bilgisayara bağlan")
-            .setView(form).setNegativeButton("Vazgeç", null).setPositiveButton("Bağlan", null).create();
+        final AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Connect to a PC")
+            .setView(form).setNegativeButton("Cancel", null).setPositiveButton("Connect", null).create();
         dialog.show();
         dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
@@ -229,11 +228,11 @@ public final class DashboardActivity extends Activity {
                 String nextPin = code.getText().toString().trim();
                 boolean nextUsb = transport.getCheckedRadioButtonId() == usbId;
                 if (!nextUsb && localAddress(nextHost) == null) {
-                    address.setError("Windows’ta gösterilen yerel IPv4 adresini gir.");
+                    address.setError("Enter the local IPv4 address shown in Metrik on Windows.");
                     return;
                 }
                 if (!nextPin.matches("[0-9]{6}")) {
-                    code.setError("Windows’ta gösterilen 6 haneli kodu gir.");
+                    code.setError("Enter the 6-digit code shown in Metrik on Windows.");
                     return;
                 }
                 if (!nextUsb) host = nextHost;
@@ -267,14 +266,14 @@ public final class DashboardActivity extends Activity {
     private void connect() {
         stopConnection();
         InetAddress address = usb ? null : localAddress(host);
-        update(endpoint, usb ? "USB kablosu" : address == null ? "" : host);
+        update(endpoint, usb ? "USB cable" : address == null ? "" : host);
         applySample(null);
         if ((!usb && address == null) || !pin.matches("[0-9]{6}")) {
-            setState("Bağlı değil", AMBER);
-            update(game, "Başlamak için bilgisayara bağlan");
+            setState("Disconnected", AMBER);
+            update(game, "Connect to a PC to get started");
             return;
         }
-        setState("Bağlanıyor…", MUTED);
+        setState("Connecting…", MUTED);
         final int current = generation;
         client = new TelemetryClient(address, pin, new TelemetryClient.Listener() {
             @Override public void onResult(final JSONObject sample) {
@@ -298,16 +297,16 @@ public final class DashboardActivity extends Activity {
     private void onResultOnMain(JSONObject sample) {
         if (sample != null) {
             missed = 0;
-            setState("Canlı", MINT);
+            setState("Live", MINT);
             applySample(sample);
         } else if (++missed == 1) {
             applySample(null);
-            setState("Yanıt bekleniyor…", AMBER);
+            setState("Waiting for a response…", AMBER);
         } else {
             missed = 2;
-            setState(usb ? "USB bağlantısı bekleniyor" : "PC’ye ulaşılamıyor", AMBER);
-            update(game, usb ? "Kabloyu, Windows’taki USB yayınını ve bağlantı kodunu kontrol et."
-                : "Ağı, PC IP adresini ve bağlantı kodunu kontrol et.");
+            setState(usb ? "Waiting for a USB connection" : "Cannot reach the PC", AMBER);
+            update(game, usb ? "Check the USB cable, the Windows stream, and the pairing code."
+                : "Check the network, PC IP address, and pairing code.");
         }
     }
 
@@ -323,13 +322,13 @@ public final class DashboardActivity extends Activity {
             update(cpuName, EMPTY);
             setBar(gpuBar, 0);
             setBar(cpuBar, 0);
-            update(game, "PC’den ölçüm bekleniyor");
+            update(game, "Waiting for metrics from the PC");
             return;
         }
         JSONObject frames = sample.optJSONObject("frame");
         update(fps, measure(frames, "fps", 0, ""));
         update(frameTime, measure(frames, "frameMilliseconds", 1, " ms"));
-        String status = string(sample, "frameStatus", "Kare ölçümü bekleniyor");
+        String status = string(sample, "frameStatus", "Waiting for frame data");
         String title = string(sample, "game", "");
         String runtime = string(sample, "runtime", "");
         if (!title.isEmpty()) status = title + (runtime.isEmpty() ? "" : "  ·  " + runtime) + "  ·  " + status;
@@ -341,7 +340,7 @@ public final class DashboardActivity extends Activity {
         update(gpuTemp, measure(gpu, "temperature", 0, " °C"));
         update(gpuHotspot, measure(gpu, "hotspot", 0, " °C"));
         update(gpuClock, measure(gpu, "clock", 0, " MHz"));
-        String boardPower = measure(gpu, "boardPower", 0, " W · Kart");
+        String boardPower = measure(gpu, "boardPower", 0, " W · Board");
         update(gpuPower, boardPower.equals(EMPTY) ? measure(gpu, "asicPower", 0, " W · ASIC") : boardPower);
         update(vram, memory(gpu, "usedGiB", "totalGiB"));
         update(vramClock, measure(gpu, "memoryClock", 0, " MHz"));
@@ -372,12 +371,12 @@ public final class DashboardActivity extends Activity {
 
     private static String percentage(JSONObject values) {
         String value = measure(values, "load", 0, "");
-        return value.equals(EMPTY) ? EMPTY : "%" + value;
+        return value.equals(EMPTY) ? EMPTY : value + "%";
     }
 
     private static String measure(JSONObject values, String key, int decimalPlaces, String unit) {
         double value = number(values, key);
-        return Double.isNaN(value) ? EMPTY : String.format(TURKISH, "%." + decimalPlaces + "f", value) + unit;
+        return Double.isNaN(value) ? EMPTY : String.format(Locale.US, "%." + decimalPlaces + "f", value) + unit;
     }
 
     private static String memory(JSONObject values, String used, String total) {
@@ -404,7 +403,7 @@ public final class DashboardActivity extends Activity {
     private TextView usage(LinearLayout panel, int accent) {
         LinearLayout section = row();
         section.setGravity(Gravity.CENTER_VERTICAL);
-        section.addView(text("Kullanım", 13, MUTED, false), new LinearLayout.LayoutParams(0, WRAP, 1));
+        section.addView(text("Usage", 13, MUTED, false), new LinearLayout.LayoutParams(0, WRAP, 1));
         TextView value = text(EMPTY, 24, accent, true);
         readings.add(value);
         section.addView(value, new LinearLayout.LayoutParams(WRAP, WRAP));
