@@ -1,4 +1,7 @@
 using System.Globalization;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Win32;
@@ -23,6 +26,7 @@ internal sealed class CpuTelemetry : IDisposable
     };
     private (ulong Idle, ulong Total)? _previous;
     private long _nextPackageRead;
+    private IPAddress _packageAddress = IPAddress.Loopback;
     private (float? Temperature, float? Power) _package;
 
     public CpuTelemetry()
@@ -51,7 +55,7 @@ internal sealed class CpuTelemetry : IDisposable
         long now = Environment.TickCount64;
         if (now >= _nextPackageRead)
         {
-            _package = await ReadPackage(stop).ConfigureAwait(false);
+            _package = await ReadPackage(_hardwareMonitor, GetLocalAddresses(), stop).ConfigureAwait(false);
             _nextPackageRead = Environment.TickCount64 + (_package == (null, null) ? 15000 : 3000);
         }
 
@@ -62,12 +66,50 @@ internal sealed class CpuTelemetry : IDisposable
             hasMemory ? memory.TotalPhysical / BytesPerGiB : null);
     }
 
-    private async Task<(float? Temperature, float? Power)> ReadPackage(CancellationToken stop)
+    private static IPAddress[] GetLocalAddresses()
     {
-        // The optional LibreHardwareMonitor server runs on the same PC.
         try
         {
-            byte[] body = await _hardwareMonitor.GetByteArrayAsync("http://127.0.0.1:8085/data.json", stop).ConfigureAwait(false);
+            return NetworkInterface.GetAllNetworkInterfaces()
+                .Where(adapter => adapter.OperationalStatus == OperationalStatus.Up)
+                .SelectMany(adapter => adapter.GetIPProperties().UnicastAddresses)
+                .Select(unicast => unicast.Address)
+                .Where(address => address.AddressFamily == AddressFamily.InterNetwork)
+                .Prepend(IPAddress.Loopback)
+                .Distinct()
+                .ToArray();
+        }
+        catch (NetworkInformationException)
+        {
+            return [IPAddress.Loopback];
+        }
+    }
+
+    private async Task<(float? Temperature, float? Power)> ReadPackage(
+        HttpClient monitor, IPAddress[] localAddresses, CancellationToken stop)
+    {
+        // Some LibreHardwareMonitor versions bind only to a selected network interface.
+        if (!localAddresses.Contains(_packageAddress)) _packageAddress = IPAddress.Loopback;
+        IPAddress preferred = _packageAddress;
+        var reading = await ReadPackageFrom(monitor, preferred, stop).ConfigureAwait(false);
+        if (reading != default) return reading;
+
+        var probes = localAddresses.Where(address => !address.Equals(preferred))
+            .Select(async address => (Address: address,
+                Reading: await ReadPackageFrom(monitor, address, stop).ConfigureAwait(false)));
+        var available = (await Task.WhenAll(probes).ConfigureAwait(false))
+            .FirstOrDefault(probe => probe.Reading != default);
+        if (available.Address is not null) _packageAddress = available.Address;
+        return available.Reading;
+    }
+
+    private static async Task<(float? Temperature, float? Power)> ReadPackageFrom(
+        HttpClient monitor, IPAddress address, CancellationToken stop)
+    {
+        try
+        {
+            var endpoint = new UriBuilder("http", address.ToString(), 8085, "/data.json").Uri;
+            byte[] body = await monitor.GetByteArrayAsync(endpoint, stop).ConfigureAwait(false);
             using var data = JsonDocument.Parse(body);
             float? temperature = null, fallback = null, power = null;
             ReadSensors(data.RootElement, ref temperature, ref fallback, ref power);
@@ -87,14 +129,16 @@ internal sealed class CpuTelemetry : IDisposable
         if (id is not null && (id.StartsWith("/amdcpu/", StringComparison.Ordinal) ||
             id.StartsWith("/intelcpu/", StringComparison.Ordinal)))
         {
-            string? name = GetString(node, "Text");
+            string? name = GetString(node, "Text")?.Trim();
             if (id.Contains("/temperature/", StringComparison.Ordinal) &&
                 ReadSensorValue(node, "°C") is > 0 and <= 150 and var degrees)
             {
                 if (name is "CPU Package" or "Core (Tdie)") temperature = Math.Max(temperature ?? degrees, degrees);
-                else if (name == "Core (Tctl/Tdie)") fallback = Math.Max(fallback ?? degrees, degrees);
+                else if (name is "Core (Tctl/Tdie)" or "CPU (Tctl/Tdie)")
+                    fallback = Math.Max(fallback ?? degrees, degrees);
             }
-            else if (name is ("CPU Package" or "Package") && id.Contains("/power/", StringComparison.Ordinal) &&
+            else if (name is ("CPU Package" or "Package" or "CPU Package Power" or "Package Power") &&
+                id.Contains("/power/", StringComparison.Ordinal) &&
                 ReadSensorValue(node, "W") is >= 0 and <= 1500 and var watts)
                 power = Math.Max(power ?? watts, watts);
         }
@@ -111,14 +155,24 @@ internal sealed class CpuTelemetry : IDisposable
 
     private static float? ReadSensorValue(JsonElement node, string unit)
     {
-        if (node.TryGetProperty("RawValue", out JsonElement raw) && raw.ValueKind == JsonValueKind.Number &&
-            raw.TryGetSingle(out float number)) return number;
-        var label = GetString(node, "Value")?.Trim();
+        if (node.TryGetProperty("RawValue", out JsonElement raw))
+        {
+            if (raw.ValueKind == JsonValueKind.Number && raw.TryGetSingle(out float number) && float.IsFinite(number))
+                return number;
+            if (raw.ValueKind == JsonValueKind.String && ParseSensorValue(raw.GetString(), unit) is { } formatted)
+                return formatted;
+        }
+        return ParseSensorValue(GetString(node, "Value"), unit);
+    }
+
+    private static float? ParseSensorValue(string? label, string unit)
+    {
+        label = label?.Trim();
         if (label is null) return null;
         bool fahrenheit = unit == "°C" && label.EndsWith("°F", StringComparison.Ordinal);
         if (!fahrenheit && !label.EndsWith(unit, StringComparison.Ordinal)) return null;
         if (!float.TryParse(label[..^unit.Length].Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture,
-            out float value)) return null;
+            out float value) || !float.IsFinite(value)) return null;
         return fahrenheit ? (value - 32) * 5 / 9 : value;
     }
 

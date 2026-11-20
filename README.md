@@ -48,7 +48,7 @@ Guest Wi-Fi can isolate devices. USB and LAN use the same pairing code.
 | --- | --- |
 | Game | FPS, average frame time, game name, and DirectX API |
 | Radeon GPU | Usage, temperature, hotspot, core and memory clocks, VRAM, fan speed, and power |
-| CPU and RAM | CPU usage, Windows-reported clock speed, logical processor count, and RAM usage |
+| CPU and RAM | CPU usage, clock speed, system memory usage, and optional CPU temperature and package power |
 
 Metrik uses Windows Event Tracing (ETW) to track Direct3D 9 and DXGI (Direct3D 10, 11, and 12) presentation events. It measures successful `Present` calls from the busiest swap chain of the foreground process over a two-second window. The rate of presentation calls can differ from the number of frames displayed on the monitor, especially with frame generation.
 
@@ -56,7 +56,7 @@ When new frame data is delayed, Metrik marks the last reading after about two se
 
 The overlay passes clicks through to the game and may be hidden in exclusive fullscreen mode. GPU readings depend on the AMD Radeon driver and available sensors. With several adapters, Metrik prefers the primary Radeon adapter.
 
-For optional CPU package temperature and power, use a build of LibreHardwareMonitor that can bind its web server to `127.0.0.1`. Under **Options → Remote Web Server**, set the address to `127.0.0.1` and the port to `8085`, then select **Run**. Leave authentication disabled for this loopback connection. Metrik displays the CPU package readings supplied by LibreHardwareMonitor. [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)
+The tablet shows **Unavailable** for CPU temperature or package power when the PC has no reading for that sensor. To supply those readings, open LibreHardwareMonitor on the PC and enable its web server under **Options → Remote Web Server**. Select `127.0.0.1` if available, or select the PC's own IPv4 address as shown by LibreHardwareMonitor. Set port `8085`, then select **Run**. Metrik checks these addresses on the same PC without authentication. The tablet still receives its readings through Metrik and does not need direct access to port `8085`. [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)
 
 ## Build from source
 

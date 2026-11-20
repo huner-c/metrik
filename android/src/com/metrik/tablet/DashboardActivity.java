@@ -48,7 +48,7 @@ public final class DashboardActivity extends Activity {
     private float dashboardScale = 1f;
     private TextView connection, endpoint, game, fps, frameTime;
     private TextView gpuName, gpuLoad, gpuTemp, gpuHotspot, gpuClock, gpuPower, gpuFan, vram, vramClock, vramTemp;
-    private TextView cpuName, cpuLoad, cpuClock, cpuTemp, cpuPower, cpuThreads, ram;
+    private TextView cpuName, cpuLoad, cpuClock, cpuTemp, cpuPower, ram, cpuSensorHelp;
     private View gpuBar, cpuBar;
 
     @Override public void onCreate(Bundle state) {
@@ -153,13 +153,13 @@ public final class DashboardActivity extends Activity {
         cpuLoad = usage(cpu, SKY);
         cpuBar = addTrack(cpu, SKY);
         pair = metricRow(cpu);
-        cpuTemp = metric(pair, "CPU temperature", TEXT, 18);
         cpuClock = metric(pair, "CPU clock", TEXT, 18);
-        pair = metricRow(cpu);
-        cpuPower = metric(pair, "Package power", TEXT, 18);
-        cpuThreads = metric(pair, "Logical processors", TEXT, 18);
-        pair = metricRow(cpu);
         ram = metric(pair, "System memory", TEXT, 18);
+        pair = metricRow(cpu);
+        cpuTemp = metric(pair, "CPU temperature", TEXT, 18);
+        cpuPower = metric(pair, "Package power", TEXT, 18);
+        cpuSensorHelp = text("Check the LibreHardwareMonitor web server on the PC.", 12, MUTED, false);
+        add(cpu, cpuSensorHelp, 6);
 
         if (wide) {
             LinearLayout hardware = row();
@@ -320,6 +320,7 @@ public final class DashboardActivity extends Activity {
             for (TextView reading : readings) update(reading, EMPTY);
             update(gpuName, EMPTY);
             update(cpuName, EMPTY);
+            cpuSensorHelp.setVisibility(View.GONE);
             setBar(gpuBar, 0);
             setBar(cpuBar, 0);
             update(game, "Waiting for metrics from the PC");
@@ -352,9 +353,13 @@ public final class DashboardActivity extends Activity {
         update(cpuName, string(cpu, "name", EMPTY));
         update(cpuLoad, percentage(cpu));
         update(cpuClock, measure(cpu, "clock", 0, " MHz"));
-        update(cpuTemp, measure(cpu, "temperature", 0, " °C"));
-        update(cpuPower, measure(cpu, "packagePower", 1, " W"));
-        update(cpuThreads, measure(cpu, "logicalProcessors", 0, ""));
+        String temperature = measure(cpu, "temperature", 0, " °C");
+        String packagePower = measure(cpu, "packagePower", 1, " W");
+        boolean missingTemperature = cpu != null && temperature.equals(EMPTY);
+        boolean missingPower = cpu != null && packagePower.equals(EMPTY);
+        update(cpuTemp, missingTemperature ? "Unavailable" : temperature);
+        update(cpuPower, missingPower ? "Unavailable" : packagePower);
+        cpuSensorHelp.setVisibility(missingTemperature || missingPower ? View.VISIBLE : View.GONE);
         update(ram, memory(cpu, "memoryUsedGiB", "memoryTotalGiB"));
         setBar(cpuBar, number(cpu, "load"));
     }
